@@ -2,8 +2,6 @@
 
 A cheminformatics platform for structure-based drug design, built on [RDKit](https://www.rdkit.org/).
 
-Docs: https://brian-day.github.io/cheminformatics/
-
 Currently implements the core molecule-handling layer: file I/O, physicochemical
 descriptors, and fingerprint-based similarity search. Structure-based features
 (protein prep, pocket detection, docking) are planned as the next layer.
@@ -76,12 +74,11 @@ uv run pytest
 ## Docs
 
 Docs are built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) from
-the `docs/` directory and deployed to GitHub Pages on every push to `main`
-(see `.github/workflows/docs.yml`). To preview locally:
+the `docs/` directory. There's no hosted version — run them locally:
 
 ```bash
 uv sync --group docs
-uv run mkdocs serve
+uv run mkdocs serve --dev-addr 127.0.0.1:8090
 ```
 
 ## Roadmap
