@@ -53,5 +53,22 @@ def conformer(
     typer.echo(f"Wrote 3D conformer to {output}")
 
 
+@app.command()
+def prep_protein(
+    input_pdb: Path,
+    output: Path = typer.Option(..., "--output", "-o", help="Output PDB file"),
+    ph: float = typer.Option(7.4, help="pH used to assign hydrogen protonation states"),
+    keep_water: bool = typer.Option(False, help="Keep crystallographic waters instead of stripping them"),
+) -> None:
+    """Clean a raw PDB structure for docking (missing atoms, hydrogens, heterogen removal).
+
+    Requires the `protein` extra: `uv sync --extra protein`.
+    """
+    from cheminformatics.protein import prepare_protein
+
+    prepare_protein(input_pdb, output, ph=ph, keep_water=keep_water)
+    typer.echo(f"Wrote prepared protein to {output}")
+
+
 if __name__ == "__main__":
     app()
