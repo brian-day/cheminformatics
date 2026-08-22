@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Cheminformatics — Molecule Properties</title>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
     <style>
         body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
         textarea { width: 100%; font-family: monospace; }
@@ -12,6 +13,9 @@
         table { border-collapse: collapse; }
         td { padding: 0.15rem 0.75rem 0.15rem 0; }
         td:first-child { color: #555; }
+        .structure-view { width: 300px; height: 300px; position: relative; }
+        .viewer-toggle { margin-bottom: 0.5rem; }
+        .viewer-toggle button.active { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -36,7 +40,16 @@
         </div>
         {% else %}
         <div class="molecule-card">
-            <div>{{ r.svg | safe }}</div>
+            <div>
+                <div class="viewer-toggle">
+                    <button type="button" class="active" onclick="showView('mol-{{ loop.index }}', '2d', this)">2D</button>
+                    <button type="button" onclick="showView('mol-{{ loop.index }}', '3d', this)"
+                        {{ "disabled" if r.molblock_3d_json == "null" }}>3D</button>
+                </div>
+                <div id="mol-{{ loop.index }}-2d" class="structure-view">{{ r.svg | safe }}</div>
+                <div id="mol-{{ loop.index }}-3d" class="structure-view" style="display: none;"></div>
+                <script type="application/json" id="mol-{{ loop.index }}-molblock">{{ r.molblock_3d_json | safe }}</script>
+            </div>
             <div>
                 <p><strong>Input:</strong> {{ r.input }}</p>
                 <table>
@@ -51,5 +64,40 @@
         {% endif %}
     {% endfor %}
     {% endif %}
+
+    <script>
+        function showView(id, view, button) {
+            document.getElementById(id + "-2d").style.display = view === "2d" ? "block" : "none";
+            document.getElementById(id + "-3d").style.display = view === "3d" ? "block" : "none";
+            button.parentElement.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+            button.classList.add("active");
+
+            if (view === "3d") {
+                const viewerDiv = document.getElementById(id + "-3d");
+                if (!viewerDiv.dataset.rendered) {
+                    if (typeof $3Dmol === "undefined") {
+                        viewerDiv.textContent = "3D viewer library failed to load (3dmol.org unreachable?).";
+                        return;
+                    }
+                    try {
+                        const molblock = JSON.parse(document.getElementById(id + "-molblock").textContent);
+                        const viewer = $3Dmol.createViewer(viewerDiv, { backgroundColor: "white" });
+                        if (!viewer) {
+                            viewerDiv.textContent = "Could not initialize 3D viewer (WebGL unavailable?).";
+                            return;
+                        }
+                        viewer.addModel(molblock, "sdf");
+                        viewer.setStyle({}, { stick: {} });
+                        viewer.zoomTo();
+                        viewer.render();
+                        viewerDiv.dataset.rendered = "true";
+                    } catch (err) {
+                        viewerDiv.textContent = "3D rendering failed: " + err;
+                        console.error(err);
+                    }
+                }
+            }
+        }
+    </script>
 </body>
 </html>

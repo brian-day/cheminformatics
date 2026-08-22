@@ -11,8 +11,10 @@ descriptors, and fingerprint-based similarity search. Structure-based features
 ```
 src/cheminformatics/
     io.py            Reading/writing molecules (SMILES, .mol, .sdf, .pdb, .smi) as RDKit Mol objects
+    standardize.py   Molecule standardization (salt stripping, charge neutralization, tautomer canonicalization)
     descriptors.py   Physicochemical descriptors (MW, LogP, TPSA, ...) and Lipinski rule-of-five checks
     fingerprints.py  Morgan fingerprints, Tanimoto similarity, ranked similarity search
+    conformers.py    3D conformer generation (ETKDG embedding + MMFF94/UFF minimization)
     cli.py           Typer CLI (`chem ...`) wiring the above into commands
     web.py           FastAPI app (`chem-web`) wiring the above into a browser UI
     templates/       Jinja2 templates for the web app
@@ -35,8 +37,9 @@ uv sync
 ## CLI
 
 ```bash
-uv run chem describe "CC(=O)OC1=CC=CC=C1C(=O)O"   # descriptors + Lipinski check
-uv run chem similarity "c1ccccc1" "Cc1ccccc1"      # Tanimoto similarity
+uv run chem describe "CC(=O)OC1=CC=CC=C1C(=O)O"           # descriptors + Lipinski check
+uv run chem similarity "c1ccccc1" "Cc1ccccc1"              # Tanimoto similarity
+uv run chem conformer "CCO" -o ethanol.sdf                 # 3D conformer (ETKDG + MMFF94/UFF)
 ```
 
 Molecule arguments accept a SMILES string or a path to a `.mol`, `.sdf`, `.pdb`, or `.smi` file.
@@ -44,7 +47,8 @@ Molecule arguments accept a SMILES string or a path to a `.mol`, `.sdf`, `.pdb`,
 ## Web app
 
 A small FastAPI app lets you paste SMILES or upload a molecule file and view each
-molecule's 2D structure alongside its calculated properties in the browser.
+molecule's 2D and 3D structure (toggle button per molecule, rendered with
+[3Dmol.js](https://3dmol.org/)) alongside its calculated properties in the browser.
 
 ```bash
 uv sync --extra web
@@ -59,10 +63,13 @@ Then open http://127.0.0.1:8080 in a browser.
 from cheminformatics.io import load_molecule
 from cheminformatics.descriptors import compute_descriptors, lipinski_violations
 from cheminformatics.fingerprints import tanimoto_similarity, similarity_search
+from cheminformatics.conformers import generate_3d_coordinates
 
-mol = load_molecule("CC(=O)OC1=CC=CC=C1C(=O)O")
+mol = load_molecule("CC(=O)OC1=CC=CC=C1C(=O)O")  # standardized automatically (see standardize.py)
 descriptors = compute_descriptors(mol)
 lipinski_violations(descriptors)
+
+conformer_mol = generate_3d_coordinates(mol)  # lowest-energy 3D conformer
 ```
 
 ## Tests

@@ -1,5 +1,6 @@
 """FastAPI web app: upload or paste molecules, view them alongside their calculated properties."""
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -7,9 +8,11 @@ import uvicorn
 from fastapi import FastAPI, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from rdkit import Chem
 from rdkit.Chem import Mol
 from rdkit.Chem.Draw import rdMolDraw2D
 
+from cheminformatics.conformers import generate_3d_coordinates
 from cheminformatics.descriptors import compute_descriptors, lipinski_violations
 from cheminformatics.io import load_molecule, load_molecules
 
@@ -25,12 +28,22 @@ def render_2d_svg(mol: Mol, size: int = 300) -> str:
     return drawer.GetDrawingText()
 
 
+def render_3d_molblock(mol: Mol) -> str | None:
+    """Generate a 3D conformer and return it as a MOL block string, or None if generation fails."""
+    try:
+        conformer_mol = generate_3d_coordinates(mol)
+    except ValueError:
+        return None
+    return Chem.MolToMolBlock(conformer_mol)
+
+
 def _analyze_mol(mol: Mol, label: str) -> dict:
     descriptors = compute_descriptors(mol)
     return {
         "input": label,
         "error": None,
         "svg": render_2d_svg(mol),
+        "molblock_3d_json": json.dumps(render_3d_molblock(mol)),
         "descriptors": descriptors.to_dict(),
         "violations": lipinski_violations(descriptors),
     }
