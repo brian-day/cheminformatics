@@ -3,9 +3,9 @@
 A cheminformatics platform for structure-based drug design, built on [RDKit](https://www.rdkit.org/).
 
 Currently implements the core molecule-handling layer (file I/O, physicochemical
-descriptors, fingerprint-based similarity search, 3D conformer generation) plus the
-first structure-based feature: protein preparation for docking. Docking prep/execution
-and molecule generation are next.
+descriptors, fingerprint-based similarity search, 3D conformer generation) plus a
+structure-based docking pipeline: protein prep, PDBQT conversion, and running/parsing
+[AutoDock Vina](https://vina.scripps.edu/). Candidate molecule generation is next.
 
 ## Repository structure
 
@@ -17,6 +17,7 @@ src/cheminformatics/
     fingerprints.py  Morgan fingerprints, Tanimoto similarity, ranked similarity search
     conformers.py    3D conformer generation (ETKDG embedding + MMFF94/UFF minimization)
     protein.py       Protein structure prep for docking (PDBFixer: missing atoms, hydrogens, heterogen removal)
+    docking.py       PDBQT prep, search box helper, and running/parsing AutoDock Vina
     cli.py           Typer CLI (`chem ...`) wiring the above into commands
     web.py           FastAPI app (`chem-web`) wiring the above into a browser UI
     templates/       Jinja2 templates for the web app
@@ -24,11 +25,11 @@ examples/            Standalone example scripts demonstrating the library
 tests/               pytest tests, one file per module above
 ```
 
-Each module is a thin, independent layer over RDKit (or, for `protein.py`, over PDBFixer/OpenMM)
-— `io` produces `Mol` objects, `descriptors` and `fingerprints` consume them, and `cli` exposes
-each as a command. As more structure-based features are added (docking, molecule generation),
-they'll follow the same pattern: one module per concern under `src/cheminformatics/`, with a
-matching test file and CLI command.
+Each module is a thin, independent layer over RDKit (or, for `protein.py`/`docking.py`, over
+PDBFixer/OpenMM and Open Babel/Meeko respectively) — `io` produces `Mol` objects, `descriptors`
+and `fingerprints` consume them, and `cli` exposes each as a command. As more structure-based
+features are added (molecule generation, pocket detection), they'll follow the same pattern:
+one module per concern under `src/cheminformatics/`, with a matching test file and CLI command.
 
 ## Setup
 
@@ -43,6 +44,8 @@ uv run chem describe "CC(=O)OC1=CC=CC=C1C(=O)O"           # descriptors + Lipins
 uv run chem similarity "c1ccccc1" "Cc1ccccc1"              # Tanimoto similarity
 uv run chem conformer "CCO" -o ethanol.sdf                 # 3D conformer (ETKDG + MMFF94/UFF)
 uv run chem prep-protein receptor.pdb -o receptor_prepped.pdb  # docking-ready protein (requires the `protein` extra)
+uv run chem dock receptor_prepped.pdb "CC(=O)Oc1ccccc1C(=O)O" -o poses.sdf \
+    --reference-ligand co_crystal_ligand.sdf                  # dock a ligand (requires the `docking` extra + vina)
 ```
 
 Molecule arguments accept a SMILES string or a path to a `.mol`, `.sdf`, `.pdb`, or `.smi` file.
@@ -68,6 +71,30 @@ at a target pH, and strips waters/heterogens — using [PDBFixer](https://github
 ```bash
 uv sync --extra protein
 uv run chem prep-protein receptor.pdb -o receptor_prepped.pdb
+```
+
+## Docking
+
+Converts a receptor and ligand to PDBQT, defines a search box (centered on a reference
+ligand's bounding box, or given explicitly), and docks with
+[AutoDock Vina](https://vina.scripps.edu/), parsing the ranked poses and their predicted
+binding affinities back into RDKit `Mol`s.
+
+Ligand PDBQT preparation uses [Meeko](https://github.com/forlilab/Meeko), which embeds a
+SMILES/atom-index mapping in the PDBQT — this is what makes it possible to reconstruct a
+correct, fully-protonated molecule from a docked pose afterward (AutoDock's PDBQT format
+otherwise merges nonpolar hydrogens into their carbon, so a generic PDBQT reader can't
+recover them). The receptor side, which is never converted back into a `Mol`, uses
+[Open Babel](https://openbabel.org/) for a simpler rigid conversion.
+
+`vina` itself is **not** a Python dependency — install the
+[AutoDock Vina binary](https://github.com/ccsb-scripps/AutoDock-Vina/releases) separately
+and make sure it's on PATH.
+
+```bash
+uv sync --extra docking
+uv run chem dock receptor_prepped.pdb "CC(=O)Oc1ccccc1C(=O)O" -o poses.sdf \
+    --reference-ligand co_crystal_ligand.sdf
 ```
 
 ## Library
@@ -103,8 +130,6 @@ uv run mkdocs serve --dev-addr 127.0.0.1:8090
 
 ## Roadmap
 
-- Docking prep and execution: receptor/ligand → PDBQT, search box definition, subprocess to
-  AutoDock Vina, and parsing scores/poses back into RDKit `Mol` objects
 - Combinatorial candidate generation: scaffold + substituent enumeration, filtered through the
   existing standardization/descriptor/Lipinski pipeline
-- Binding pocket detection and pose scoring/reporting
+- Binding pocket detection and richer pose scoring/reporting
