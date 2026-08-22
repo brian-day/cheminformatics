@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Cheminformatics — Molecule Properties</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        textarea { width: 100%; font-family: monospace; }
+        .molecule-card { display: flex; gap: 1.5rem; border: 1px solid #ccc; border-radius: 6px;
+                         padding: 1rem; margin-bottom: 1rem; align-items: flex-start; }
+        .molecule-card.error { border-color: #c0392b; color: #c0392b; }
+        table { border-collapse: collapse; }
+        td { padding: 0.15rem 0.75rem 0.15rem 0; }
+        td:first-child { color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Molecule Properties</h1>
+
+    <form method="post" action="/analyze" enctype="multipart/form-data">
+        <label for="smiles_text">SMILES (one per line)</label><br>
+        <textarea id="smiles_text" name="smiles_text" rows="6">{{ smiles_text or "" }}</textarea><br><br>
+
+        <label for="file">Or upload a file (.smi, .sdf, .mol, .pdb)</label><br>
+        <input id="file" type="file" name="file"><br><br>
+
+        <button type="submit">Analyze</button>
+    </form>
+
+    {% if results %}
+    <h2>Results</h2>
+    {% for r in results %}
+        {% if r.error %}
+        <div class="molecule-card error">
+            <p><strong>{{ r.input }}</strong>: {{ r.error }}</p>
+        </div>
+        {% else %}
+        <div class="molecule-card">
+            <div>{{ r.svg | safe }}</div>
+            <div>
+                <p><strong>Input:</strong> {{ r.input }}</p>
+                <table>
+                    {% for key, value in r.descriptors.items() %}
+                    <tr><td>{{ key }}</td><td>{{ value }}</td></tr>
+                    {% endfor %}
+                </table>
+                <p><strong>Lipinski violations:</strong>
+                    {{ r.violations | join(", ") if r.violations else "none" }}</p>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+    {% endif %}
+</body>
+</html>
