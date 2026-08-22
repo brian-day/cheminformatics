@@ -22,4 +22,12 @@ packages = ["src/cheminformatics"]
 [dependency-groups]
 dev = [
     "pytest>=8.0",
+    "ruff>=0.6",
 ]
+
+[tool.ruff]
+line-length = 110
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
