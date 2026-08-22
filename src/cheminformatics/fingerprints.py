@@ -8,12 +8,24 @@ _MORGAN_GENERATOR = GetMorganGenerator(radius=2, fpSize=2048)
 
 
 def morgan_fingerprint(mol: Mol) -> DataStructs.ExplicitBitVect:
-    """Compute a Morgan (ECFP-like) fingerprint, radius 2, 2048 bits."""
+    """Compute a Morgan (ECFP-like) fingerprint, radius 2, 2048 bits.
+
+    A Morgan fingerprint encodes a molecule's structure by hashing the
+    circular atom neighborhoods around each atom (up to the given radius)
+    into a fixed-length bit vector. Two molecules that share substructures
+    tend to set many of the same bits, which is what makes the fingerprint
+    useful for similarity comparisons.
+    """
     return _MORGAN_GENERATOR.GetFingerprint(mol)
 
 
 def tanimoto_similarity(mol_a: Mol, mol_b: Mol) -> float:
-    """Tanimoto similarity between two molecules' Morgan fingerprints."""
+    """Tanimoto similarity between two molecules' Morgan fingerprints.
+
+    Tanimoto similarity is the ratio of bits set in both fingerprints
+    (intersection) to bits set in either fingerprint (union), giving a
+    score from 0 (no shared bits) to 1 (identical fingerprints).
+    """
     fp_a = morgan_fingerprint(mol_a)
     fp_b = morgan_fingerprint(mol_b)
     return DataStructs.TanimotoSimilarity(fp_a, fp_b)

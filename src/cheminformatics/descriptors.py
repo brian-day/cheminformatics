@@ -7,6 +7,19 @@ from rdkit.Chem import Crippen, Descriptors, Lipinski, Mol
 
 @dataclass
 class DescriptorSet:
+    """Standard physicochemical descriptors computed for a molecule.
+
+    molecular_weight: molecular weight (Da)
+    logp: calculated octanol-water partition coefficient (Crippen LogP)
+    tpsa: topological polar surface area (Å²)
+    h_bond_donors: count of hydrogen bond donors
+    h_bond_acceptors: count of hydrogen bond acceptors
+    rotatable_bonds: count of rotatable bonds
+    ring_count: total number of rings
+    aromatic_ring_count: number of aromatic rings
+    heavy_atom_count: count of non-hydrogen atoms
+    """
+
     molecular_weight: float
     logp: float
     tpsa: float
@@ -24,14 +37,14 @@ class DescriptorSet:
 def compute_descriptors(mol: Mol) -> DescriptorSet:
     """Compute a standard set of physicochemical descriptors for a molecule."""
     return DescriptorSet(
-        molecular_weight=round(Descriptors.MolWt(mol), 2),
-        logp=round(Crippen.MolLogP(mol), 2),
-        tpsa=round(Descriptors.TPSA(mol), 2),
-        h_bond_donors=Lipinski.NumHDonors(mol),
-        h_bond_acceptors=Lipinski.NumHAcceptors(mol),
-        rotatable_bonds=Lipinski.NumRotatableBonds(mol),
-        ring_count=Lipinski.RingCount(mol),
-        aromatic_ring_count=Lipinski.NumAromaticRings(mol),
+        molecular_weight=round(Descriptors.MolWt(mol), 2),  # type: ignore[attr-defined]
+        logp=round(Crippen.MolLogP(mol), 2),  # type: ignore[attr-defined]
+        tpsa=round(Descriptors.TPSA(mol), 2),  # type: ignore[attr-defined]
+        h_bond_donors=Lipinski.NumHDonors(mol),  # type: ignore[attr-defined]
+        h_bond_acceptors=Lipinski.NumHAcceptors(mol),  # type: ignore[attr-defined]
+        rotatable_bonds=Lipinski.NumRotatableBonds(mol),  # type: ignore[attr-defined]
+        ring_count=Lipinski.RingCount(mol),  # type: ignore[attr-defined]
+        aromatic_ring_count=Lipinski.NumAromaticRings(mol),  # type: ignore[attr-defined]
         heavy_atom_count=mol.GetNumHeavyAtoms(),
     )
 
