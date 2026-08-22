@@ -58,6 +58,12 @@ class DockingResult:
     affinity: float
 
 
+def _as_triple(values) -> tuple[float, float, float]:
+    """Used to convert tuple(float...) of known size 3 to tuple(float, float, float) to work around type warnings."""
+    x, y, z = values
+    return (float(x), float(y), float(z))
+
+
 def docking_box_from_ligand(ligand_mol: Mol, padding: float = 8.0) -> DockingBox:
     """Compute a search box centered on a reference ligand's 3D coordinates.
 
@@ -70,8 +76,8 @@ def docking_box_from_ligand(ligand_mol: Mol, padding: float = 8.0) -> DockingBox
     positions = ligand_mol.GetConformer().GetPositions()
     mins = positions.min(axis=0)
     maxs = positions.max(axis=0)
-    center = tuple(float(v) for v in (mins + maxs) / 2)
-    size = tuple(float(v) for v in (maxs - mins) + 2 * padding)
+    center = _as_triple((mins + maxs) / 2)
+    size = _as_triple((maxs - mins) + 2 * padding)
     return DockingBox(center=center, size=size)
 
 
