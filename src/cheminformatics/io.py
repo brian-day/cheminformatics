@@ -19,12 +19,21 @@ def load_molecule(source: str) -> Mol:
     use `load_molecules` to get all of them.
     """
     path = Path(source)
-    if not path.exists():
-        mol = Chem.MolFromSmiles(source)
-        if mol is None:
-            raise ValueError(f"Could not parse '{source}' as a SMILES string or find it as a file")
-        return standardize_molecule(mol)
+    if path.exists():
+        return _load_molecule_from_file(path)
+    return _load_molecule_from_smiles(source)
 
+
+def _load_molecule_from_smiles(smiles: str) -> Mol:
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError(f"Could not parse '{smiles}' as a SMILES string")
+    return standardize_molecule(mol)
+
+
+def _load_molecule_from_file(path: str | Path) -> Mol:
+    if not isinstance(path, Path):
+        path = Path(path)
     suffix = path.suffix.lower()
     if suffix in (".mol",):
         mol = Chem.MolFromMolFile(str(path))
