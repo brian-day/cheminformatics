@@ -9,8 +9,17 @@ dependencies = [
     "typer>=0.12",
 ]
 
+[project.optional-dependencies]
+web = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+]
+
 [project.scripts]
 chem = "cheminformatics.cli:app"
+chem-web = "cheminformatics.web:main"
 
 [build-system]
 requires = ["hatchling"]

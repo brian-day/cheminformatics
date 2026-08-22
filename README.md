@@ -14,6 +14,9 @@ src/cheminformatics/
     descriptors.py   Physicochemical descriptors (MW, LogP, TPSA, ...) and Lipinski rule-of-five checks
     fingerprints.py  Morgan fingerprints, Tanimoto similarity, ranked similarity search
     cli.py           Typer CLI (`chem ...`) wiring the above into commands
+    web.py           FastAPI app (`chem-web`) wiring the above into a browser UI
+    templates/       Jinja2 templates for the web app
+examples/            Standalone example scripts demonstrating the library
 tests/               pytest tests, one file per module above
 ```
 
@@ -37,6 +40,18 @@ uv run chem similarity "c1ccccc1" "Cc1ccccc1"      # Tanimoto similarity
 ```
 
 Molecule arguments accept a SMILES string or a path to a `.mol`, `.sdf`, `.pdb`, or `.smi` file.
+
+## Web app
+
+A small FastAPI app lets you paste SMILES or upload a molecule file and view each
+molecule's 2D structure alongside its calculated properties in the browser.
+
+```bash
+uv sync --extra web
+uv run chem-web
+```
+
+Then open http://127.0.0.1:8080 in a browser.
 
 ## Library
 
