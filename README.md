@@ -6,6 +6,23 @@ Currently implements the core molecule-handling layer: file I/O, physicochemical
 descriptors, and fingerprint-based similarity search. Structure-based features
 (protein prep, pocket detection, docking) are planned as the next layer.
 
+## Repository structure
+
+```
+src/cheminformatics/
+    io.py            Reading/writing molecules (SMILES, .mol, .sdf, .pdb, .smi) as RDKit Mol objects
+    descriptors.py   Physicochemical descriptors (MW, LogP, TPSA, ...) and Lipinski rule-of-five checks
+    fingerprints.py  Morgan fingerprints, Tanimoto similarity, ranked similarity search
+    cli.py           Typer CLI (`chem ...`) wiring the above into commands
+tests/               pytest tests, one file per module above
+```
+
+Each module is a thin, independent layer over RDKit — `io` produces `Mol` objects,
+`descriptors` and `fingerprints` consume them, and `cli` exposes both as commands.
+As structure-based features are added (protein prep, pocket detection, docking),
+they'll follow the same pattern: one module per concern under `src/cheminformatics/`,
+with a matching test file and CLI command.
+
 ## Setup
 
 ```bash
