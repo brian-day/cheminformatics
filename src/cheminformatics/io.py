@@ -5,9 +5,15 @@ from pathlib import Path
 from rdkit import Chem
 from rdkit.Chem import Mol
 
+from cheminformatics.standardize import standardize_molecule
+
 
 def load_molecule(source: str) -> Mol:
     """Load a single molecule from a SMILES string or a file path (.smi, .mol, .sdf, .pdb).
+
+    The result is passed through `standardize_molecule` before being returned, so salts,
+    charge state, and tautomeric form are normalized regardless of how the input happened
+    to be drawn.
 
     For .sdf files containing multiple records, the first molecule is returned;
     use `load_molecules` to get all of them.
@@ -17,7 +23,7 @@ def load_molecule(source: str) -> Mol:
         mol = Chem.MolFromSmiles(source)
         if mol is None:
             raise ValueError(f"Could not parse '{source}' as a SMILES string or find it as a file")
-        return mol
+        return standardize_molecule(mol)
 
     suffix = path.suffix.lower()
     if suffix in (".mol",):
@@ -26,7 +32,7 @@ def load_molecule(source: str) -> Mol:
         mols = load_molecules(path)
         if not mols:
             raise ValueError(f"No parsable molecules found in '{path}'")
-        return mols[0]
+        return mols[0]  # already standardized by load_molecules
     elif suffix == ".pdb":
         mol = Chem.MolFromPDBFile(str(path))
     elif suffix in (".smi", ".smiles"):
@@ -38,17 +44,18 @@ def load_molecule(source: str) -> Mol:
 
     if mol is None:
         raise ValueError(f"RDKit failed to parse molecule from '{path}'")
-    return mol
+    return standardize_molecule(mol)
 
 
 def load_molecules(path: str | Path) -> list[Mol]:
-    """Load all molecules from a multi-record file (currently .sdf)."""
+    """Load all molecules from a multi-record file (currently .sdf), each standardized via
+    `standardize_molecule`."""
     path = Path(path)
     if path.suffix.lower() != ".sdf":
         return [load_molecule(str(path))]
 
     supplier = Chem.SDMolSupplier(str(path))
-    return [mol for mol in supplier if mol is not None]
+    return [standardize_molecule(mol) for mol in supplier if mol is not None]
 
 
 def write_molecule(mol: Mol, destination: str | Path) -> None:
