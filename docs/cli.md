@@ -6,3 +6,5 @@ uv run chem similarity "c1ccccc1" "Cc1ccccc1"      # Tanimoto similarity
 ```
 
 Molecule arguments accept a SMILES string or a path to a `.mol`, `.sdf`, `.pdb`, or `.smi` file.
+
+Temp update to CLI docs.
