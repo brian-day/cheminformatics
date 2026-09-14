@@ -133,3 +133,5 @@ uv run mkdocs serve --dev-addr 127.0.0.1:8090
 - Combinatorial candidate generation: scaffold + substituent enumeration, filtered through the
   existing standardization/descriptor/Lipinski pipeline
 - Binding pocket detection and richer pose scoring/reporting
+
+- Temp readme change for stack PR experiment.
